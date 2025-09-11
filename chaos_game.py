@@ -1,58 +1,45 @@
-#import numpy as np
-from tkinter import *
 from random import *
 import time
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+
 #number of points to draw in chaos game
-num_points = 50000
+num_points = 500000
+point_cloud = [np.array([]) for i in range(num_points)]
 
-verts = [[ 50,  50],
-         [950,  50],
-         [ 50, 950],
-         [950, 950]]
+N = 5
+verts = [np.array([math.sin(2*math.pi*t/N), math.cos(2*math.pi*t/N)]) for t in range(N)]
+r_opt=4/7
+current_point = verts[0]
 
-current_point = [250,250]
-
-def lerp(a: list,b: list,t: float) -> list:
-    return [(1-t)*a_k + t*b_k for a_k,b_k in zip(a,b)]
-
-def draw_point(p: list ,r: float):
-    w.create_oval(p[0]-r, p[1]-r, p[0]+r, p[1]+r, fill="#000000")
+def lerp(a: np.array,b: np.array,t: float) -> list:
+    return (1-t)*a + t*b
 
 
-choice_weights = [0,1,0.5,1]
-cum_choice_weights = [sum(choice_weights[:i]) for i in range(1,len(choice_weights)+1)]
-print(cum_choice_weights)
+choice_weights = [0]+[1 for i in range(N-1)]
+#choice_weights = choice_weights[2:] + choice_weights[:2]
+print(choice_weights)
 def choose_next(r: int) -> int:
     L = [i for i in range(0,len(verts))]
     L = L[r:] + L[:r]
-    choice = choices(L, cum_weights=cum_choice_weights, k=1)[0]
+    choice = choices(L, choice_weights, k=1)[0]
     return choice
-
-
-canvas_width = 1000
-canvas_height = 1000
-master = Tk()
-master.title("Points")
-w = Canvas(master,
-           width=canvas_width,
-           height=canvas_height)
-w.pack(expand=NO, fill=BOTH)
-
-# Draws verticies
-for p in verts:
-    w.create_oval(p[0]-3, p[1]-3, p[0]+3, p[1]+3, fill="#FF0000")
-
 
 
 prev_r = 0
 # Draws all points in fractal
 for i in range(num_points):
-    draw_point(current_point, 0)
-    
+    point_cloud[i] = current_point
     r = choose_next(prev_r)
-    current_point = lerp(current_point, verts[r], t = 1/3)
+    #w.create_line(current_point,verts[r])
+    current_point = lerp(current_point, verts[r], t = r_opt)
     prev_r = r
 
+point_cloud = np.transpose(point_cloud)
+plt.figure(figsize=(8, 6)) # Adjust figure size for better viewing
+plt.scatter(point_cloud[0], point_cloud[1], s=1, c='green', alpha=1, marker='.')
+plt.gca().set_aspect('equal', adjustable='box')
+plt.show()
 
-mainloop()
 
